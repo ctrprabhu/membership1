@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  # Frontend React application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      - api
+    networks:
+      - membership-network
+
+  # Backend API service (placeholder for future implementation)
+  api:
+    image: node:20-alpine
+    command: sh -c "echo 'API service placeholder' && tail -f /dev/null"
+    volumes:
+      - ./api:/app
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+    environment:
+      - DB_HOST=db
+      - DB_USER=membership_user
+      - DB_PASSWORD=membership_password
+      - DB_NAME=membership
+      - DB_PORT=3306
+    networks:
+      - membership-network
+
+  # MySQL Database
+  db:
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: membership
+      MYSQL_USER: membership_user
+      MYSQL_PASSWORD: membership_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    networks:
+      - membership-network
+
+  # phpMyAdmin for database management
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+      MYSQL_ROOT_PASSWORD: rootpassword
+    ports:
+      - "8080:80"
+    depends_on:
+      - db
+    networks:
+      - membership-network
+
+networks:
+  membership-network:
+    driver: bridge
+
+volumes:
+  mysql-data:
